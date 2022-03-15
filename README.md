@@ -1,29 +1,17 @@
-This project is inspired by the Brave browser's Basic Attention Token - But tailored towards surveys.
+This project is inspired by the Brave browser's Basic Attention Token
 
-
-We'll allow creating a campaign for surveys. 
 
 ```
-Survey = {
-    survey_id: string
-    name: string
-    categories: [string]
-    amount: number
-    minumum_participants: number
-    maximum_participants: number
-    start_date: Date
-    end_date: Date
-    questions: [SurveyQuestions]
-    responses: [SurveyAnswers]
-}
-
-SurveyQuestions = {
-    question: string
-    options: [string]
-}
-
-SurveyAnswers = {
-    answers: [string]
+pub struct AdCampaign {
+    pub id: String,
+    pub name: String,
+    pub cta: String, // navigate to a url
+    pub description: String,
+    pub categories: Vec<String>, // eg. Technology, Medicine, Arts, Politics, Biology etc.
+    pub amount: u128,
+    pub amount_per_impression: u128, // for estimation only
+    pub min_impressions: u8, // example assumes less than 128 impressions
+    pub max_impressions: u8, // example assumes less than 128 impressions
 }
 
 ```
