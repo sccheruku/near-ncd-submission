@@ -1,0 +1,22 @@
+{
+  "name": "ts-scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ts-node": "ts-node"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "command-line-args": "^5.2.1",
+    "near-api-js": "^0.44.2"
+  },
+  "devDependencies": {
+    "@types/command-line-args": "^5.2.0",
+    "@types/node": "^17.0.23",
+    "ts-node": "^10.5.0"
+  }
+}
