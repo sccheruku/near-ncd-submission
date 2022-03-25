@@ -15,3 +15,15 @@ pub struct AdCampaign {
 }
 
 ```
+
+
+Run it
+
+read contract instructions
+
+build and deploy contract
+
+start advertisement site - or try it out on vercel 
+for fast payouts, please set impressions to 10-25 (or you might have to keep refreshing the screen for a while you fulfil the impression requirements)
+
+start blog site - or start it on vercel

@@ -4,7 +4,6 @@ use near_sdk::collections::{LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk::{assert_one_yocto, env, near_bindgen, setup_alloc, AccountId, Balance};
-use rand::Rng;
 use std::collections::HashMap;
 
 use crate::models::*;
@@ -90,6 +89,13 @@ impl NearBasicAttentionToken {
       .filter(|vec| vec.owner_account_id == owner_account_id)
       .collect()
   }
+  fn list_active_ad_campaigns(self) -> Vec<AdCampaign> {
+    self
+      .ad_campaigns
+      .values()
+      .filter(|vec| matches!(vec.status, AdCampaignStatus::ACTIVE))
+      .collect()
+  }
   pub fn increment_impression(&mut self, ad_campaign_id: String) -> String {
     // Check AdCampaign exists
     let ad_campaign = self
@@ -104,11 +110,7 @@ impl NearBasicAttentionToken {
 
     let mut existing_ad_campaign_impression = self
       .ad_campaign_impressions
-      .get(&String::from(format!(
-        "{}:{}",
-        ad_campaign_id,
-        env::signer_account_id()
-      )))
+      .get(&String::from(format!("{}", ad_campaign_id)))
       .expect("AdCampaignImpression does not exist");
 
     let _impressions = existing_ad_campaign_impression
@@ -122,13 +124,23 @@ impl NearBasicAttentionToken {
     existing_ad_campaign_impression
       .impressions
       .insert(env::signer_account_id(), impressions);
-
+    // Save to contract state
+    self.ad_campaign_impressions.insert(
+      &existing_ad_campaign_impression.ad_campaign_id,
+      &existing_ad_campaign_impression,
+    );
     // Update total impressions
     let mut total_impressions = 0;
     for impression in existing_ad_campaign_impression.impressions.values() {
       total_impressions += impression
     }
-
+    env::log(
+      String::from(format!(
+        "total_impressions: {}, {}",
+        total_impressions, impressions
+      ))
+      .as_bytes(),
+    );
     if total_impressions > ad_campaign.min_impressions {
       self.close_ad_campaign(
         ad_campaign_id,
@@ -155,10 +167,12 @@ impl NearBasicAttentionToken {
     self.ad_campaigns.insert(&ad_campaign_id, &ad_campaign);
 
     // Payout the ad_campaign members
-    let payout_per_viewer = ad_campaign.amount / total_impressions as u128;
+    let payout_per_viewer_per_view = ad_campaign.amount / total_impressions as u128;
     // loop through, i'm sure there's a better way
     for account_id in existing_ad_campaign_impressions.keys() {
-      near_sdk::Promise::new(AccountId::from(account_id)).transfer(payout_per_viewer);
+      let _user_impressions = **(existing_ad_campaign_impressions.get(account_id).get_or_insert(&1));
+      let payout_for_this_viewer = payout_per_viewer_per_view * (_user_impressions as u128);
+      near_sdk::Promise::new(AccountId::from(account_id)).transfer(payout_for_this_viewer);
     }
 
     String::from("OK")
@@ -169,14 +183,18 @@ impl NearBasicAttentionToken {
       self.ad_campaigns.len() > 0,
       "Wait until atleast one ad campaign is created"
     );
-    let mut rng = rand::thread_rng();
-    let index = rng.gen_range(0, self.ad_campaigns.len());
-    let key = match self.ad_campaigns.keys_as_vector().get(index) {
+
+    let rand: usize = *env::random_seed().get(0).unwrap() as usize; // limited to max 256 campaigns ? // as usize probably bad ?
+    let ad_campaigns = self.list_active_ad_campaigns();
+    let total = ad_campaigns.len();
+    let index = rand % total;
+
+    let ad_campaign = match ad_campaigns.get(index) {
       Some(k) => k,
       None => env::panic(String::from("Not found").as_bytes()),
     };
-
-    let ad_data_string_raw = match env::storage_read(&key.as_bytes()) {
+    let key = format!("{}", ad_campaign.id);
+    let ad_data_string_raw = match env::storage_read(key.as_bytes()) {
       Some(v) => v,
       None => String::from("").as_bytes().to_vec(),
     };

@@ -95,7 +95,7 @@ function CreateForm(props: any) {
                 args: { ad_campaign_in, ad },
                 gas: ATTACHED_GAS,
                 amount: utils.format.parseNearAmount(amount.toString() || "0"),
-                meta: "create_product"
+                meta: "create_ad_campaign"
             }
         );
         console.log("response", response);
