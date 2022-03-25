@@ -7,7 +7,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <div>
       <Head>
-        <title>Create Next App</title>
+        <title>Advertiser Admin</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Component {...pageProps} />
