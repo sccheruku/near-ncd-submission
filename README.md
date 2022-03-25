@@ -52,6 +52,14 @@ $ npm run dev
 # Visit the app on http://localhost:3000
 ```
 
+### Run e2e example
+```
+# cd into ts-scripts
+# open e2e.ts file for more info
+$ npm run ts-node -- e2e.ts
+```
+
+
 ### Viewer Rewards
 After you have browsed enough, assuming the Campaign Target Impressions have been met. Some funds from the campaign will be added to your account. 
 
@@ -60,7 +68,7 @@ The last viewer triggers the campaign to close. At this point, `lib.rs->close_ad
 
 
 ### Demo Video Link
-
+https://www.loom.com/share/2a063740fa2545b1b863cc03e5927dd6
 
 ### Closing remarks and Next Steps
 - Allow deleting data from contracts after the ad campaign is completed.

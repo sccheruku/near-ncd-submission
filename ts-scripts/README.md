@@ -1,1 +1,1 @@
-npx ts-node e2e.ts
+npm run ts-node -- e2e.ts
