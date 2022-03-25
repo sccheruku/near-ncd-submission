@@ -4,8 +4,8 @@ use near_sdk::collections::{LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk::{assert_one_yocto, env, near_bindgen, setup_alloc, AccountId, Balance};
+use rand::Rng;
 use std::collections::HashMap;
-
 
 use crate::models::*;
 use crate::utils::*;
@@ -36,7 +36,7 @@ impl Default for NearBasicAttentionToken {
 #[near_bindgen]
 impl NearBasicAttentionToken {
   #[payable]
-  pub fn create_ad_campaign(&mut self, ad_campaign_in: AdCampaign) -> String {
+  pub fn create_ad_campaign(&mut self, ad_campaign_in: AdCampaign, ad: AdData) -> String {
     // Assert
     assert!(env::attached_deposit() > 1, "Deposit required");
     // Basic validations
@@ -50,6 +50,11 @@ impl NearBasicAttentionToken {
     assert!(
       existng_ad_campaign.is_none(),
       "Store with ID already exists"
+    );
+
+    assert_eq!(
+      ad_campaign_in.id, ad.id,
+      "AdCampaign and AdData Id must match"
     );
 
     // Apply
@@ -70,9 +75,21 @@ impl NearBasicAttentionToken {
       &ad_campaign_impressions.ad_campaign_id,
       &ad_campaign_impressions,
     );
+    let data = match near_sdk::serde_json::to_string(&ad) {
+      Ok(v) => v,
+      Err(_) => String::from(""),
+    };
+    env::storage_write(ad.id.as_bytes(), data.as_bytes());
     String::from("OK")
   }
 
+  pub fn list_ad_campaigns(self, owner_account_id: String) -> Vec<AdCampaign> {
+    self
+      .ad_campaigns
+      .values()
+      .filter(|vec| vec.owner_account_id == owner_account_id)
+      .collect()
+  }
   pub fn increment_impression(&mut self, ad_campaign_id: String) -> String {
     // Check AdCampaign exists
     let ad_campaign = self
@@ -95,7 +112,9 @@ impl NearBasicAttentionToken {
       .expect("AdCampaignImpression does not exist");
 
     let _impressions = existing_ad_campaign_impression
-      .impressions.entry(env::signer_account_id()).or_insert(0);
+      .impressions
+      .entry(env::signer_account_id())
+      .or_insert(0);
     *_impressions += 1;
     let impressions = *_impressions;
 
@@ -143,6 +162,41 @@ impl NearBasicAttentionToken {
     }
 
     String::from("OK")
+  }
+
+  pub fn get_random_ad(self) -> String {
+    assert!(
+      self.ad_campaigns.len() > 0,
+      "Wait until atleast one ad campaign is created"
+    );
+    let mut rng = rand::thread_rng();
+    let index = rng.gen_range(0, self.ad_campaigns.len());
+    let key = match self.ad_campaigns.keys_as_vector().get(index) {
+      Some(k) => k,
+      None => env::panic(String::from("Not found").as_bytes()),
+    };
+
+    let ad_data_string_raw = match env::storage_read(&key.as_bytes()) {
+      Some(v) => v,
+      None => String::from("").as_bytes().to_vec(),
+    };
+    let ad_data_string = match String::from_utf8(ad_data_string_raw) {
+      Ok(r) => r,
+      Err(_) => String::from(""),
+    };
+    return ad_data_string;
+  }
+
+  pub fn get_ad(self, id: String) -> String {
+    let ad_data_string_raw = match env::storage_read(&id.as_bytes()) {
+      Some(v) => v,
+      None => String::from("").as_bytes().to_vec(),
+    };
+    let ad_data_string = match String::from_utf8(ad_data_string_raw) {
+      Ok(r) => r,
+      Err(_) => String::from(""),
+    };
+    return ad_data_string;
   }
 }
 
@@ -195,7 +249,7 @@ mod tests {
     let ad_campaign_data = AdCampaign {
       name: String::from("Campaign Name"),
       cta: String::from("https://google.com"),
-      description: String::from("Some campaign description"),
+      // description: String::from("Some campaign description"),
       categories: vec![String::from("Technology"), String::from("Biology")],
       amount: attached_deposit,
       min_impressions: u8::from(100),
@@ -206,9 +260,15 @@ mod tests {
       status: AdCampaignStatus::ACTIVE,
     };
 
+    let ad = AdData {
+      id: String::from("null"),
+      name: String::from("Campaign Name"),
+      description: String::from("Some Ad Desc"),
+    };
+
     assert_eq!(
       "OK".to_string(),
-      contract.create_ad_campaign(ad_campaign_data)
+      contract.create_ad_campaign(ad_campaign_data, ad)
     );
   }
 
@@ -223,7 +283,7 @@ mod tests {
     let ad_campaign_data = AdCampaign {
       name: String::from("Campaign Name"),
       cta: String::from("https://google.com"),
-      description: String::from("Some campaign description"),
+      // description: String::from("Some campaign description"),
       categories: vec![String::from("Technology"), String::from("Biology")],
       amount: attached_deposit,
       min_impressions: u8::from(100),
@@ -253,7 +313,7 @@ mod tests {
     let ad_campaign_data = AdCampaign {
       name: String::from("Campaign Name"),
       cta: String::from("https://google.com"),
-      description: String::from("Some campaign description"),
+      // description: String::from("Some campaign description"),
       categories: vec![String::from("Technology"), String::from("Biology")],
       amount: attached_deposit,
       min_impressions: u8::from(0),
@@ -269,7 +329,11 @@ mod tests {
 
     contract.increment_impression(ad_campaign_id); // This should trigger campaign to be closed
     assert!(matches!(
-      contract.ad_campaigns.get(&format!("{}:{}", "near_test", "0")).expect("").status,
+      contract
+        .ad_campaigns
+        .get(&format!("{}:{}", "near_test", "0"))
+        .expect("")
+        .status,
       AdCampaignStatus::COMPLETED
     ));
   }

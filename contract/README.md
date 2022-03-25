@@ -25,3 +25,7 @@ Exploring The Code
   [create-near-app]: https://github.com/near/create-near-app
   [correct target]: https://github.com/near/near-sdk-rs#pre-requisites
   [cargo]: https://doc.rust-lang.org/book/ch01-03-hello-cargo.html
+
+TODO: 
+env 'RUSTFLAGS=-C link-arg=-s' cargo build --target wasm32-unknown-unknown --release
+near dev-deploy target/wasm32-unknown-unknown/release/nearbasicattentiontoken.wasm
