@@ -75,4 +75,4 @@ https://www.loom.com/share/2a063740fa2545b1b863cc03e5927dd6
 - Make ad-views without tracking or linking to the viewer
 - `lib.rs->increment_impression` is vulnerable to attack -> someone can call it 100s of times to take funds from the campaign. 
 
-This project can be improved upon but a production worthy app might require a combination of smart contracts to orchestrate advertisements and track impressions without giving away the near addresses of people that have viewed the app. It may not be ideal for privacy. 
+This project can be improved upon but a production worthy app might require a combination of smart contracts to orchestrate advertisements and track impressions without giving away the near addresses of people that have viewed the app. The current approach does not respect privacy. 
