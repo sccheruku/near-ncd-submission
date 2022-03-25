@@ -15,11 +15,6 @@ Blogs can allow visitors to connect to the smart contract, so that ads can be lo
 
 `frontend-advertiser` contains the "admin site" which allows advertisers to set up campaigns. 
 
-### Next Steps
-- Allow deleting data from contracts after the ad campaign is completed.
-- Make ad-views without tracking or linking to the viewer
-- `lib.rs->increment_impression` is vulnerable to attack -> someone can call it 100s of times to take funds from the campaign. 
-
 ### Instructions to run the project
 
 
@@ -30,7 +25,7 @@ Blogs can allow visitors to connect to the smart contract, so that ads can be lo
 $ env 'RUSTFLAGS=-C link-arg=-s' cargo build --target wasm32-unknown-unknown --release
 # Deploy to the testnet
 $ near dev-deploy target/wasm32-unknown-unknown/release/nearbasicattentiontoken.wasm
-# VERY IMPORTANT: Take note of the contract address. You will need it for next steps
+# VERY IMPORTANT: Take note of the contract address in `contract/neardev/dev-account.env`. You will need it for next steps
 ```
 
 ### Setup a campaign
@@ -57,8 +52,19 @@ $ npm run dev
 # Visit the app on http://localhost:3000
 ```
 
-### After you have browsed enough, assuming the Campaign Target Impressions have been met. Some funds from the campaign will be added to your account. 
+### Viewer Rewards
+After you have browsed enough, assuming the Campaign Target Impressions have been met. Some funds from the campaign will be added to your account. 
+
+You can checkout this Transaction for an example of how it works: https://explorer.testnet.near.org/transactions/oHiSSuPgrB9ihLsKwAp3bguUMqT38VHhmxNoCevneTr
+The last viewer triggers the campaign to close. At this point, `lib.rs->close_ad_campaign` is called and the smart contract calculates the payouts for each viewer based on the number of times they saw the advertisements. 
+
 
 ### Demo Video Link
 
 
+### Closing remarks and Next Steps
+- Allow deleting data from contracts after the ad campaign is completed.
+- Make ad-views without tracking or linking to the viewer
+- `lib.rs->increment_impression` is vulnerable to attack -> someone can call it 100s of times to take funds from the campaign. 
+
+This project can be improved upon but a production worthy app might require a combination of smart contracts to orchestrate advertisements and track impressions without giving away the near addresses of people that have viewed the app. It may not be ideal for privacy. 
